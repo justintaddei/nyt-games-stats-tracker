@@ -1,0 +1,28 @@
+{
+  "name": "nyt-games-stats",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsc -w",
+    "dev:start": "nodemon dist/index.js",
+    "start": "node dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/justintaddei/nyt-games-stats-tracker.git"
+  },
+  "author": "Justin Taddei",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/justintaddei/nyt-games-stats-tracker/issues"
+  },
+  "homepage": "https://github.com/justintaddei/nyt-games-stats-tracker#readme",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

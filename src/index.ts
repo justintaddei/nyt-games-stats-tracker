@@ -6,8 +6,7 @@ import { writeWordleRecord } from "./helpers/wordle-writter"
 import { ConnectionsRecord, UserWordle, WordleRecord } from "./types"
 require("dotenv").config()
 
-// const CHANNEL_ID = "1187251547512508496"
-const CHANNEL_ID = "1190123524673765537"
+const CHANNEL_ID = process.env.CHANNEL_ID!
 
 const client = new Client({
   intents: [

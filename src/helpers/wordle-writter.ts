@@ -25,6 +25,6 @@ export const writeWordleRecord = (record: WordleRecord): string => {
         return `@${wordle.user.name}${wordle.hardMode ? " (hard mode)" : ""}\n${wordle.guesses}`
     }).join("\n\n")
 
-    return `${title}${scores}\n\nGuesses:\n\`\`\`\n${guesses}\n\`\`\``
+    return `${title}${scores}\n\nGuesses:\n\`\`\`\n${guesses}\n\`\`\`\n\n`
 }
 

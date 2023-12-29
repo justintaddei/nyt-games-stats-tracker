@@ -36,7 +36,7 @@ function getChannel() {
 function forEachMessage(channel: TextBasedChannel, fn: (message: Message) => void) {
   return new Promise<void>((resolve) => {
     channel.messages.fetch().then((messages) => {
-      messages.forEach(fn)
+      messages.reverse().forEach(fn)
       resolve()
     })
   })

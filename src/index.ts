@@ -160,8 +160,6 @@ async function processMessages() {
   const readTimeElapsed = Date.now() - startReadTime
   let writes = 0
 
-  const startWriteTime = Date.now()
-
   ;[...wordleRecords.entries()]
     .sort(puzzleNumber)
     .forEach(([puzzleId, record]) => {
@@ -195,11 +193,9 @@ async function processMessages() {
       }
     })
 
-  const writeTimeElapsed = Date.now() - startWriteTime
-
   if (debugMode) {
     channel.send(
-      `!reply-debug\n\nRead time: ${readTimeElapsed}ms\nWrite time: ${writeTimeElapsed}ms\nReads: ${reads}\nWrites: ${writes}`
+      `!reply-debug\n\nRead time: ${readTimeElapsed}ms\nReads: ${reads}\nWrites: ${writes}`
     )
   }
 

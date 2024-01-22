@@ -199,7 +199,7 @@ async function processMessages() {
 
   if (debugMode) {
     channel.send(
-      `!reply-debug\n\nRead time: ${readTimeElapsed}ms\nWrite time: ${writeTimeElapsed}\nReads: ${reads}\nWrites: ${writes}`
+      `!reply-debug\n\nRead time: ${readTimeElapsed}ms\nWrite time: ${writeTimeElapsed}ms\nReads: ${reads}\nWrites: ${writes}`
     )
   }
 

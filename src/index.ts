@@ -97,22 +97,10 @@ async function processMessages() {
       // Game records will always be the first messages in the thread
       const record = parseWordleRecord(message, client)
 
-      if (wordleRecords.has(record.puzzleId)) {
-        wordleRecords.set(record.puzzleId, {
-          puzzleId: record.puzzleId,
-          modified: true,
-          wordles: [
-            ...record.wordles,
-            ...wordleRecords.get(record.puzzleId)!.wordles,
-          ],
-        })
-        deletionQueue.add(message)
-      } else {
-        wordleRecords.set(record.puzzleId, {
-          puzzleId: record.puzzleId,
-          wordles: record.wordles,
-        })
-      }
+      wordleRecords.set(record.puzzleId, {
+        puzzleId: record.puzzleId,
+        wordles: record.wordles,
+      })
 
       existingWordleMessages.set(record.puzzleId, message)
 
@@ -122,22 +110,10 @@ async function processMessages() {
     if (isConnectionsRecord(message.content)) {
       const record = parseConnectionsRecord(message, client)
 
-      if (connectionsRecords.has(record.puzzleId)) {
-        connectionsRecords.set(record.puzzleId, {
-          puzzleId: record.puzzleId,
-          modified: true,
-          connections: [
-            ...record.connections,
-            ...connectionsRecords.get(record.puzzleId)!.connections,
-          ],
-        })
-        deletionQueue.add(message)
-      } else {
-        connectionsRecords.set(record.puzzleId, {
-          puzzleId: record.puzzleId,
-          connections: record.connections,
-        })
-      }
+      connectionsRecords.set(record.puzzleId, {
+        puzzleId: record.puzzleId,
+        connections: record.connections,
+      })
 
       existingConnectionsMessages.set(record.puzzleId, message)
 
@@ -184,6 +160,8 @@ async function processMessages() {
   const readTimeElapsed = Date.now() - startReadTime
   let writes = 0
 
+  const startWriteTime = Date.now()
+
   ;[...wordleRecords.entries()]
     .sort(puzzleNumber)
     .forEach(([puzzleId, record]) => {
@@ -217,9 +195,11 @@ async function processMessages() {
       }
     })
 
+  const writeTimeElapsed = Date.now() - startWriteTime
+
   if (debugMode) {
     channel.send(
-      `!reply-debug\n\nRead time: ${readTimeElapsed}ms\nReads: ${reads}\nWrites: ${writes}`
+      `!reply-debug\n\nRead time: ${readTimeElapsed}ms\nWrite time: ${writeTimeElapsed}\nReads: ${reads}\nWrites: ${writes}`
     )
   }
 

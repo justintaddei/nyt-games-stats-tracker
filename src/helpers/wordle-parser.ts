@@ -14,13 +14,13 @@ export const isWordleRecord = (text: string = '') =>
   /^Wordle results for \d+/.test(text)
 
 export const extractWordleId = (text: string) => {
-  const match = text.match(/Wordle(?: results for)? (\d+)/)
+  const match = text.replaceAll(',', '').match(/Wordle(?: results for)? (\d+)/)
   if (!match?.[1]) throw new Error(`No wordle id found in ${text}`)
   return match[1]
 }
 
 export function extractWordleScore(scoreLine: string) {
-  const match = scoreLine.match(/^Wordle \d+ ([1-6]|X)\//)
+  const match = scoreLine.match(/([1-6]|X)\/6/)
   if (!match?.[1]) throw new Error(`No wordle score found in "${scoreLine}"`)
   return match[1]
 }

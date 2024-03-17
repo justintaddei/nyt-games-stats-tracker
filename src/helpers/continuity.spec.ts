@@ -1,9 +1,9 @@
 import { Client } from 'discord.js'
 import { parseConnectionsRecord } from './connections-parser'
-import { writeConnectionsRecord } from './connections-writter'
+import { writeConnectionsRecord } from './connections-writer'
 import fs from 'fs'
 import { parseWordleRecord } from './wordle-parser'
-import { writeWordleRecord } from './wordle-writter'
+import { writeWordleRecord } from './wordle-writer'
 
 describe('continuity', () => {
   describe('connections', () => {

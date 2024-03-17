@@ -1,5 +1,10 @@
 import { WordleRecord } from '../types'
 
+/**
+ * Writes a Wordle record to a string.
+ * @param record The Wordle record to write.
+ * @returns The string representation of the Wordle record.
+ */
 export const writeWordleRecord = (record: WordleRecord): string => {
   const title = `Wordle results for ${record.puzzleId}:\n\n`
 

@@ -1,4 +1,4 @@
-import { writeConnectionsRecord } from './connections-writter'
+import { writeConnectionsRecord } from './connections-writer'
 
 describe('writeConnectionsRecord', () => {
   it('should correctly format a Connections record with a winner', () => {

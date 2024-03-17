@@ -5,14 +5,14 @@ import {
   parseConnections,
   parseConnectionsRecord,
 } from './helpers/connections-parser'
-import { writeConnectionsRecord } from './helpers/connections-writter'
+import { writeConnectionsRecord } from './helpers/connections-writer'
 import {
   isWordle,
   isWordleRecord,
   parseWordle,
   parseWordleRecord,
 } from './helpers/wordle-parser'
-import { writeWordleRecord } from './helpers/wordle-writter'
+import { writeWordleRecord } from './helpers/wordle-writer'
 import { ConnectionsRecord, UserWordle, WordleRecord } from './types'
 require('dotenv').config()
 

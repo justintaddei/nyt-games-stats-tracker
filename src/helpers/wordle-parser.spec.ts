@@ -39,6 +39,7 @@ describe('isWordleRecord', () => {
 describe('extractWordleId', () => {
   it('should extract the Wordle ID from a valid Wordle string', () => {
     expect(extractWordleId('Wordle 123')).toBe('123')
+    expect(extractWordleId('Wordle 1,000 🎉 3/6*')).toBe('1000')
     expect(extractWordleId('Wordle results for 456')).toBe('456')
   })
 
@@ -66,6 +67,8 @@ describe('extractWordleScore', () => {
   it('should extract the Wordle score from a valid score line', () => {
     expect(extractWordleScore('Wordle 123 5/6')).toBe('5')
     expect(extractWordleScore('Wordle 456 X/6')).toBe('X')
+    expect(extractWordleScore('Wordle 1,000 🎉 3/6*')).toBe('3')
+    expect(extractWordleScore('Wordle 1,000 🎉 X/6*')).toBe('X')
   })
 
   it('should throw an error for invalid score lines', () => {
@@ -75,8 +78,8 @@ describe('extractWordleScore', () => {
     expect(() => extractWordleScore('Wordle 456 7/6')).toThrow(
       'No wordle score found in "Wordle 456 7/6"'
     )
-    expect(() => extractWordleScore('Wordle123 5/6')).toThrow(
-      'No wordle score found in "Wordle123 5/6"'
+    expect(() => extractWordleScore('Wordle123 5/7')).toThrow(
+      'No wordle score found in "Wordle123 5/7"'
     )
   })
 

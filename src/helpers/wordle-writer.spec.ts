@@ -1,5 +1,4 @@
-// FILEPATH: /c:/dev/discord/nyt-games-stats/src/helpers/wordle-writter.spec.ts
-import { writeWordleRecord } from './wordle-writter'
+import { writeWordleRecord } from './wordle-writer'
 
 describe('writeWordleRecord', () => {
   it('should correctly format a Wordle record', () => {

@@ -1,4 +1,4 @@
-import { ConnectionsRecord, UserConnections } from '../types'
+import type { ConnectionsRecord, UserConnections } from '../types'
 
 const sortConnections = (a: UserConnections, b: UserConnections) => {
   if (a.won && !b.won) return -1
@@ -24,20 +24,14 @@ export const writeConnectionsRecord = (record: ConnectionsRecord): string => {
       let result = ''
 
       if (won) {
-        result = `won with ${score.incorrect} mistake${
-          score.incorrect === 1 ? '' : 's'
-        }`
+        result = `won with ${score.incorrect} mistake${score.incorrect === 1 ? '' : 's'}`
       } else if (!score.correct) {
-        result = `lost after finding no groups`
+        result = 'lost after finding no groups'
       } else {
-        result = `lost after finding ${score.correct} group${
-          score.correct === 1 ? '' : 's'
-        }`
+        result = `lost after finding ${score.correct} group${score.correct === 1 ? '' : 's'}`
       }
 
-      return `${i + 1}. (${score.correct}-${score.incorrect}) <@${
-        user.id
-      }> ${result}.`
+      return `${i + 1}. (${score.correct}-${score.incorrect}) <@${user.id}> ${result}.`
     })
     .join('\n')
 

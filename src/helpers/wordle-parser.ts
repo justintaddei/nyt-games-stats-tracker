@@ -1,5 +1,5 @@
-import { Client } from 'discord.js'
-import { UserWordle, WordleRecord } from '../types'
+import type { Client } from 'discord.js'
+import type { UserWordle, WordleRecord } from '../types'
 
 type WordleMessage = {
   content: string
@@ -9,9 +9,8 @@ type WordleMessage = {
   }
 }
 
-export const isWordle = (text: string = '') => /^Wordle \d+/.test(text)
-export const isWordleRecord = (text: string = '') =>
-  /^Wordle results for \d+/.test(text)
+export const isWordle = (text = '') => /^Wordle \d+/.test(text)
+export const isWordleRecord = (text = '') => /^Wordle results for \d+/.test(text)
 
 export const extractWordleId = (text: string) => {
   const match = text.replaceAll(',', '').match(/Wordle(?: results for)? (\d+)/)
@@ -55,10 +54,7 @@ export const parseWordle = (msg: WordleMessage): UserWordle => {
   }
 }
 
-export const parseWordleRecord = (
-  msg: WordleMessage,
-  client: Client
-): WordleRecord => {
+export const parseWordleRecord = (msg: WordleMessage, client: Client): WordleRecord => {
   const lines = msg.content
     .split('\n')
     .map((line) => line.trim())
@@ -71,19 +67,24 @@ export const parseWordleRecord = (
   const guessesStart = lines.indexOf('Guesses:')
 
   let currentUser = ''
-  const mappedGuesses = lines.slice(guessesStart).reduce((_guesses, line) => {
-    if (line.startsWith('@')) {
-      currentUser = line.split(' ')[0]!.slice(1)
-      _guesses.push({ username: currentUser, guesses: '' })
-      return _guesses
-    } else if (/^[🟨🟩⬜]+/.test(line)) {
-      const puzzle = _guesses.find((guess) => guess.username === currentUser)!
-      if (!puzzle) throw new Error(`No puzzle found for user ${currentUser}`)
-      puzzle.guesses = `${puzzle.guesses}\n${line}`.trim()
-    }
+  const mappedGuesses = lines.slice(guessesStart).reduce(
+    (_guesses, line) => {
+      if (line.startsWith('@')) {
+        currentUser = line.split(' ')[0]!.slice(1)
+        _guesses.push({ username: currentUser, guesses: '' })
+        return _guesses
+      }
 
-    return _guesses
-  }, [] as { username: string; guesses: string }[])
+      if (/^[🟨🟩⬜]+/u.test(line)) {
+        const puzzle = _guesses.find((guess) => guess.username === currentUser)!
+        if (!puzzle) throw new Error(`No puzzle found for user ${currentUser}`)
+        puzzle.guesses = `${puzzle.guesses}\n${line}`.trim()
+      }
+
+      return _guesses
+    },
+    [] as { username: string; guesses: string }[]
+  )
 
   const wordles = lines.slice(1, guessesStart).map((line) => {
     const match = line.match(/^\d+\. (\d|X)\/6 by <@(\d+)>/)
@@ -94,9 +95,7 @@ export const parseWordleRecord = (
     const score = match[1]
     const userId = match[2]
     const username = client.users.cache.get(userId)?.username
-    const guesses = mappedGuesses.find(
-      (guess) => guess.username === username
-    )?.guesses
+    const guesses = mappedGuesses.find((guess) => guess.username === username)?.guesses
 
     if (!username) throw new Error(`No username found for user id ${userId}`)
     if (!guesses) throw new Error(`No guesses found for user ${username}`)

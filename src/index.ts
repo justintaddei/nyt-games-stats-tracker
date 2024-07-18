@@ -1,4 +1,5 @@
-import { Client, IntentsBitField, Message, TextBasedChannel } from 'discord.js'
+import type { Message, TextBasedChannel } from 'discord.js'
+import { IntentsBitField, Client } from 'discord.js'
 import {
   isConnections,
   isConnectionsRecord,
@@ -6,14 +7,11 @@ import {
   parseConnectionsRecord,
 } from './helpers/connections-parser'
 import { writeConnectionsRecord } from './helpers/connections-writer'
-import {
-  isWordle,
-  isWordleRecord,
-  parseWordle,
-  parseWordleRecord,
-} from './helpers/wordle-parser'
+import { isWordle, isWordleRecord, parseWordle, parseWordleRecord } from './helpers/wordle-parser'
 import { writeWordleRecord } from './helpers/wordle-writer'
-import { ConnectionsRecord, UserWordle, WordleRecord } from './types'
+import type { ConnectionsRecord, StrandsRecord, UserWordle, WordleRecord } from './types'
+import { isStrands, isStrandsRecord, parseStrands, parseStrandsRecord } from './helpers/strands-parser'
+import { writeStrandsRecord } from './helpers/strands-writer'
 require('dotenv').config()
 
 const CHANNEL_ID = process.env.CHANNEL_ID!
@@ -30,29 +28,21 @@ client.login(process.env.TOKEN)
 
 const isReady = new Promise<void>((r) => client.on('ready', () => r()))
 
-const uniqueGames = (
-  game: { user: UserWordle['user'] },
-  i: number,
-  games: { user: UserWordle['user'] }[]
-) => games.findIndex((g) => g.user.id === game.user.id) === i
-const puzzleNumber = ([a]: [string, unknown], [b]: [string, unknown]) =>
-  parseInt(a) - parseInt(b)
+const uniqueGames = (game: { user: UserWordle['user'] }, i: number, games: { user: UserWordle['user'] }[]) =>
+  games.findIndex((g) => g.user.id === game.user.id) === i
+const puzzleNumber = ([a]: [string, unknown], [b]: [string, unknown]) => Number.parseInt(a) - Number.parseInt(b)
 
 function getChannel() {
   return new Promise<TextBasedChannel>((resolve) => {
     client.channels.fetch(CHANNEL_ID).then((channel) => {
-      if (!channel?.isTextBased())
-        throw new Error('Channel is not a text based')
+      if (!channel?.isTextBased()) throw new Error('Channel is not a text based')
 
       resolve(channel)
     })
   })
 }
 
-function forEachMessage(
-  channel: TextBasedChannel,
-  fn: (message: Message) => void
-) {
+function forEachMessage(channel: TextBasedChannel, fn: (message: Message) => void) {
   return new Promise<void>((resolve) => {
     channel.messages.fetch().then((messages) => {
       messages.reverse().forEach(fn)
@@ -62,16 +52,17 @@ function forEachMessage(
 }
 
 const isDebugOn = (message: Message) => message.content.startsWith('!debug-on')
-const isDebugOff = (message: Message) =>
-  message.content.startsWith('!debug-off')
+const isDebugOff = (message: Message) => message.content.startsWith('!debug-off')
 
 let debugMode = false
 
 async function processMessages() {
   const wordleRecords = new Map<string, WordleRecord>()
   const connectionsRecords = new Map<string, ConnectionsRecord>()
+  const strandsRecords = new Map<string, StrandsRecord>()
   const existingWordleMessages = new Map<string, Message>()
   const existingConnectionsMessages = new Map<string, Message>()
+  const existingStrandsMessages = new Map<string, Message>()
   const deletionQueue = new Set<Message>()
 
   const channel = await getChannel()
@@ -120,6 +111,20 @@ async function processMessages() {
       return
     }
 
+    if (isStrandsRecord(message.content)) {
+      const record = parseStrandsRecord(message, client)
+
+      strandsRecords.set(record.puzzleId, {
+        puzzleId: record.puzzleId,
+        phrase: record.phrase,
+        strands: record.strands,
+      })
+
+      existingStrandsMessages.set(record.puzzleId, message)
+
+      return
+    }
+
     if (isWordle(message.content)) {
       const wordle = parseWordle(message)
       const record = wordleRecords.get(wordle.puzzleId) ?? {
@@ -143,12 +148,29 @@ async function processMessages() {
         connections: [],
       }
 
-      record.connections = [connections, ...record.connections].filter(
-        uniqueGames
-      )
+      record.connections = [connections, ...record.connections].filter(uniqueGames)
       record.modified = true
 
       connectionsRecords.set(connections.puzzleId, record)
+      deletionQueue.add(message)
+
+      return
+    }
+
+    if (isStrands(message.content)) {
+      const strands = parseStrands(message)
+      const record =
+        strandsRecords.get(strands.puzzleId) ??
+        ({
+          puzzleId: strands.puzzleId,
+          phrase: strands.phrase,
+          strands: [],
+        } satisfies StrandsRecord)
+
+      record.strands = [strands, ...record.strands].filter(uniqueGames)
+      record.modified = true
+
+      strandsRecords.set(strands.puzzleId, record)
       deletionQueue.add(message)
 
       return
@@ -159,51 +181,57 @@ async function processMessages() {
 
   const readTimeElapsed = Date.now() - startReadTime
   let writes = 0
+  ;[...wordleRecords.entries()].sort(puzzleNumber).forEach(([puzzleId, record]) => {
+    const message = existingWordleMessages.get(puzzleId) ?? null
+    const content = writeWordleRecord(record)
 
-  ;[...wordleRecords.entries()]
-    .sort(puzzleNumber)
-    .forEach(([puzzleId, record]) => {
-      const message = existingWordleMessages.get(puzzleId) ?? null
-      const content = writeWordleRecord(record)
+    if (!record.modified) return
 
-      if (!record.modified) return
+    writes++
 
-      writes++
+    if (message) {
+      message.edit(content)
+    } else {
+      channel.send(content)
+    }
+  })
+  ;[...connectionsRecords.entries()].sort(puzzleNumber).forEach(([puzzleId, record]) => {
+    const message = existingConnectionsMessages.get(puzzleId) ?? null
+    const content = writeConnectionsRecord(record)
 
-      if (message) {
-        message.edit(content)
-      } else {
-        channel.send(content)
-      }
-    })
-  ;[...connectionsRecords.entries()]
-    .sort(puzzleNumber)
-    .forEach(([puzzleId, record]) => {
-      const message = existingConnectionsMessages.get(puzzleId) ?? null
-      const content = writeConnectionsRecord(record)
+    if (!record.modified) return
 
-      if (!record.modified) return
+    writes++
 
-      writes++
+    if (message) {
+      message.edit(content)
+    } else {
+      channel.send(content)
+    }
+  })
+  ;[...strandsRecords.entries()].sort(puzzleNumber).forEach(([puzzleId, record]) => {
+    const message = existingStrandsMessages.get(puzzleId) ?? null
+    const content = writeStrandsRecord(record)
 
-      if (message) {
-        message.edit(content)
-      } else {
-        channel.send(content)
-      }
-    })
+    if (!record.modified) return
+
+    writes++
+
+    if (message) {
+      message.edit(content)
+    } else {
+      channel.send(content)
+    }
+  })
 
   if (debugMode) {
-    channel.send(
-      `!reply-debug\n\nRead time: ${readTimeElapsed}ms\nReads: ${reads}\nWrites: ${writes}`
-    )
+    channel.send(`!reply-debug\n\nRead time: ${readTimeElapsed}ms\nReads: ${reads}\nWrites: ${writes}`)
   }
 
   deletionQueue.forEach((message) => {
     message.delete()
   })
 }
-
 ;(async () => {
   await isReady
 

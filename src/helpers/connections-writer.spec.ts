@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import { writeConnectionsRecord } from './connections-writer'
 
 describe('writeConnectionsRecord', () => {

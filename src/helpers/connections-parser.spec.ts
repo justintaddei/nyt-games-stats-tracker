@@ -1,4 +1,4 @@
-import { Client } from 'discord.js'
+import type { Client } from 'discord.js'
 import {
   isConnections,
   isConnectionsRecord,
@@ -7,6 +7,7 @@ import {
   parseConnections,
   parseConnectionsRecord,
 } from './connections-parser'
+import { describe, expect, it } from 'vitest'
 
 describe('Connections Parser', () => {
   describe('isConnections', () => {
@@ -46,9 +47,7 @@ describe('Connections Parser', () => {
 
     it('should throw an error for invalid Connections string', () => {
       const text = 'Invalid connections string'
-      expect(() => extractConnectionsId(text)).toThrowError(
-        'Invalid connections string'
-      )
+      expect(() => extractConnectionsId(text)).toThrowError('Invalid connections string')
     })
   })
 
@@ -64,8 +63,7 @@ describe('Connections Parser', () => {
   describe('parseConnections', () => {
     it('should parse the Connections message and return the user connections', () => {
       const message = {
-        content:
-          'Connections\nPuzzle #123\n\n🟨🟨🟨🟨\n🟩🟩🟩🟩\n🟪🟪🟪🟪\n🟦🟦🟦🟦',
+        content: 'Connections\nPuzzle #123\n\n🟨🟨🟨🟨\n🟩🟩🟩🟩\n🟪🟪🟪🟪\n🟦🟦🟦🟦',
         author: {
           username: 'JohnDoe',
           id: '123456789',
@@ -110,9 +108,7 @@ describe('Connections Parser', () => {
       expect(result.connections[0]?.won).toBe(true)
       expect(result.connections[0]?.score.correct).toBe(4)
       expect(result.connections[0]?.score.incorrect).toBe(2)
-      expect(result.connections[0]?.connections).toBe(
-        '🟩🟩🟩🟩\n🟨🟩🟨🟨\n🟨🟨🟨🟨\n🟦🟦🟦🟦\n🟦🟦🟪🟦\n🟪🟪🟪🟪'
-      )
+      expect(result.connections[0]?.connections).toBe('🟩🟩🟩🟩\n🟨🟩🟨🟨\n🟨🟨🟨🟨\n🟦🟦🟦🟦\n🟦🟦🟪🟦\n🟪🟪🟪🟪')
     })
   })
 })

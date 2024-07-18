@@ -1,9 +1,11 @@
-import { Client } from 'discord.js'
+import type { Client } from 'discord.js'
+import { describe, expect, it } from 'vitest'
 import { parseConnectionsRecord } from './connections-parser'
 import { writeConnectionsRecord } from './connections-writer'
-import fs from 'fs'
 import { parseWordleRecord } from './wordle-parser'
 import { writeWordleRecord } from './wordle-writer'
+import { parseStrandsRecord } from './strands-parser'
+import { writeStrandsRecord } from './strands-writer'
 
 describe('continuity', () => {
   describe('connections', () => {
@@ -60,10 +62,32 @@ describe('continuity', () => {
       expect(message).toEqual(msg.content)
     })
   })
+
+  describe('strands', () => {
+    it('writeStrandsRecord should result in the same output after being parsed by parseStrandsRecord', () => {
+      const msg = {
+        content:
+          "Strands results for #200:\n“Give it the ol' college try”\n\n1. <@123> used no hints.\n2. <@456> used 1 hint.\n3. <@789> used 2 hints.\n\nScores:\n```\n@user123\n🔵🔵🔵🟡\n🔵🔵🔵\n\n@user456\n💡🔵🔵🟡\n🔵🔵🔵🔵\n🔵\n\n@user789\n💡🔵💡🔵\n🟡🔵🔵🔵\n🔵\n```\n\n",
+        author: {
+          username: 'Admin',
+          id: '987654321',
+        },
+      }
+
+      const client = {
+        users: {
+          cache: {
+            get: (userId: string) => ({
+              username: `user${userId}`,
+            }),
+          },
+        },
+      }
+
+      const record = parseStrandsRecord(msg, client as Client)
+
+      const message = writeStrandsRecord(record)
+      expect(message).toEqual(msg.content)
+    })
+  })
 })
-
-/* 
-
-
-
-*/

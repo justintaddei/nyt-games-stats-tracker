@@ -42,3 +42,24 @@ export type ConnectionsRecord = {
   modified?: boolean
   connections: UserConnections[]
 }
+
+export type UserStrands = {
+  user: {
+    name: string
+    id: string
+  }
+  puzzleId: string
+  phrase: string
+  hints: number
+  strands: string
+}
+
+export type StrandsRecord = {
+  puzzleId: string
+  /**
+   * Indicates if the record needs to be rewritten to the channel
+   */
+  modified?: boolean
+  phrase: string
+  strands: UserStrands[]
+}

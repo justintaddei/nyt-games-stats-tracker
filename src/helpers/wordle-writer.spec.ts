@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import { writeWordleRecord } from './wordle-writer'
 
 describe('writeWordleRecord', () => {

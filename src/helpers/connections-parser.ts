@@ -1,5 +1,5 @@
-import { Client } from 'discord.js'
-import { ConnectionsRecord, ConnectionsScore, UserConnections } from '../types'
+import type { Client } from 'discord.js'
+import type { ConnectionsRecord, ConnectionsScore, UserConnections } from '../types'
 
 type ConnectionsMessage = {
   // TODO: move this to types.ts and use for both wordle and connections
@@ -10,10 +10,8 @@ type ConnectionsMessage = {
   }
 }
 
-export const isConnections = (text: string = ''): boolean =>
-  /^Connections\s+Puzzle\s+#\d+$/m.test(text)
-export const isConnectionsRecord = (text: string = ''): boolean =>
-  /^Connections results for Puzzle #\d+:$/m.test(text)
+export const isConnections = (text = ''): boolean => /^Connections\s+Puzzle\s+#\d+$/m.test(text)
+export const isConnectionsRecord = (text = ''): boolean => /^Connections results for Puzzle #\d+:$/m.test(text)
 
 export const extractConnectionsId = (text: string): string => {
   const match = text.match(/Connections(?: results for)?\s+Puzzle #(\d+)/)
@@ -21,8 +19,7 @@ export const extractConnectionsId = (text: string): string => {
   return match[1]
 }
 
-const splitEmoji = (str: string) =>
-  [...new Intl.Segmenter().segment(str)].map((x) => x.segment)
+const splitEmoji = (str: string) => [...new Intl.Segmenter().segment(str)].map((x) => x.segment)
 
 export const computeConnectionsScore = (lines: string[]): ConnectionsScore => {
   const puzzleSize = lines.length
@@ -61,17 +58,13 @@ export const parseConnections = (msg: ConnectionsMessage): UserConnections => {
   }
 }
 
-export const parseConnectionsRecord = (
-  msg: ConnectionsMessage,
-  client: Client
-): ConnectionsRecord => {
+export const parseConnectionsRecord = (msg: ConnectionsMessage, client: Client): ConnectionsRecord => {
   const lines = msg.content
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
 
-  if (!isConnectionsRecord(lines[0]))
-    throw new Error('Invalid connections record')
+  if (!isConnectionsRecord(lines[0])) throw new Error('Invalid connections record')
 
   const puzzleId = extractConnectionsId(lines[0]!)
 
@@ -79,22 +72,23 @@ export const parseConnectionsRecord = (
 
   let currentUser = ''
 
-  const mappedAttempts = lines
-    .slice(attemptsStart)
-    .reduce((_attempts, line) => {
+  const mappedAttempts = lines.slice(attemptsStart).reduce(
+    (_attempts, line) => {
       if (line.startsWith('@')) {
         currentUser = line.split(' ')[0]!.slice(1)
         _attempts.push({ username: currentUser, connections: '' })
         return _attempts
-      } else if (/^[🟨🟩🟪🟦]+/.test(line)) {
-        const puzzle = _attempts.find(
-          (attempt) => attempt.username === currentUser
-        )!
+      }
+
+      if (/^[🟨🟩🟪🟦]+/u.test(line)) {
+        const puzzle = _attempts.find((attempt) => attempt.username === currentUser)!
         puzzle.connections = `${puzzle.connections}\n${line}`.trim()
       }
 
       return _attempts
-    }, [] as { username: string; connections: string }[])
+    },
+    [] as { username: string; connections: string }[]
+  )
 
   const connections = lines.slice(1, attemptsStart).map((line) => {
     const match = line.match(/<@(\d+)>/)
@@ -104,9 +98,7 @@ export const parseConnectionsRecord = (
     const username = client.users.cache.get(userId)?.username
     if (!username) throw new Error(`No username found for user id ${userId}`)
 
-    const attempts = mappedAttempts.find(
-      (attempt) => attempt.username === username
-    )?.connections
+    const attempts = mappedAttempts.find((attempt) => attempt.username === username)?.connections
     if (!attempts) throw new Error(`No attempts found for user ${username}`)
 
     const score = computeConnectionsScore(attempts.split('\n'))

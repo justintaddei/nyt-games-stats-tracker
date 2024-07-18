@@ -1,4 +1,4 @@
-import { WordleRecord } from '../types'
+import type { WordleRecord } from '../types'
 
 /**
  * Writes a Wordle record to a string.
@@ -23,17 +23,13 @@ export const writeWordleRecord = (record: WordleRecord): string => {
 
   const scores = wordles
     .map((wordle, i) => {
-      return `${i + 1}. ${wordle.score}/6 by <@${wordle.user.id}>${
-        wordle.hardMode ? ' (hard mode)' : ''
-      }`
+      return `${i + 1}. ${wordle.score}/6 by <@${wordle.user.id}>${wordle.hardMode ? ' (hard mode)' : ''}`
     })
     .join('\n')
 
   const guesses = wordles
     .map((wordle) => {
-      return `@${wordle.user.name}${wordle.hardMode ? ' (hard mode)' : ''}\n${
-        wordle.guesses
-      }`
+      return `@${wordle.user.name}${wordle.hardMode ? ' (hard mode)' : ''}\n${wordle.guesses}`
     })
     .join('\n\n')
 

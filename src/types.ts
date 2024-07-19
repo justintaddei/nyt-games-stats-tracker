@@ -63,3 +63,24 @@ export type StrandsRecord = {
   phrase: string
   strands: UserStrands[]
 }
+
+export type AggregateScores = {
+  wordles: number[]
+  connections: number[]
+  strands: number[]
+}
+
+export type LeaderboardRecord = {
+  wordles: {
+    user: string
+    average: number
+  }
+  connections: {
+    user: string
+    average: number
+  }
+  strands: {
+    user: string
+    average: number
+  }
+}

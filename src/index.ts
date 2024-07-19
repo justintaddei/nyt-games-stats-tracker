@@ -9,9 +9,19 @@ import {
 import { writeConnectionsRecord } from './helpers/connections-writer'
 import { isWordle, isWordleRecord, parseWordle, parseWordleRecord } from './helpers/wordle-parser'
 import { writeWordleRecord } from './helpers/wordle-writer'
-import type { ConnectionsRecord, StrandsRecord, UserWordle, WordleRecord } from './types'
+import type {
+  AggregateScores,
+  ConnectionsRecord,
+  LeaderboardRecord,
+  StrandsRecord,
+  UserConnections,
+  UserStrands,
+  UserWordle,
+  WordleRecord,
+} from './types'
 import { isStrands, isStrandsRecord, parseStrands, parseStrandsRecord } from './helpers/strands-parser'
 import { writeStrandsRecord } from './helpers/strands-writer'
+import { getLeaderboard, writeLeaderboard } from './helpers/leaderboard'
 require('dotenv').config()
 
 const CHANNEL_ID = process.env.CHANNEL_ID!
@@ -176,6 +186,7 @@ async function processMessages() {
       return
     }
 
+    // Delete all other messages, including the leaderboard message
     deletionQueue.add(message)
   })
 
@@ -227,6 +238,59 @@ async function processMessages() {
   if (debugMode) {
     channel.send(`!reply-debug\n\nRead time: ${readTimeElapsed}ms\nReads: ${reads}\nWrites: ${writes}`)
   }
+
+  const aggregateScores = new Map<string, AggregateScores>()
+  ;[...wordleRecords.values()].forEach((record) => {
+    const { wordles } = record
+
+    wordles.forEach((game) => {
+      const { user } = game
+
+      if (!aggregateScores.has(user.id))
+        aggregateScores.set(user.id, {
+          wordles: [],
+          connections: [],
+          strands: [],
+        })
+
+      aggregateScores.get(user.id)!.wordles.push(+game.score)
+    })
+  })
+  ;[...connectionsRecords.values()].forEach((record) => {
+    const { connections } = record
+
+    connections.forEach((game) => {
+      const { user } = game
+
+      if (!aggregateScores.has(user.id))
+        aggregateScores.set(user.id, {
+          wordles: [],
+          connections: [],
+          strands: [],
+        })
+
+      aggregateScores.get(user.id)!.connections.push(+game.score.incorrect)
+    })
+  })
+  ;[...strandsRecords.values()].forEach((record) => {
+    const { strands } = record
+
+    strands.forEach((game) => {
+      const { user } = game
+
+      if (!aggregateScores.has(user.id))
+        aggregateScores.set(user.id, {
+          wordles: [],
+          connections: [],
+          strands: [],
+        })
+
+      aggregateScores.get(user.id)!.strands.push(+game.hints)
+    })
+  })
+
+  const leaderboard: LeaderboardRecord = getLeaderboard(aggregateScores)
+  channel.send(writeLeaderboard(leaderboard))
 
   deletionQueue.forEach((message) => {
     message.delete()

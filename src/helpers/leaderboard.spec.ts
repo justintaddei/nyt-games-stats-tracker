@@ -36,7 +36,7 @@ describe('writeLeaderboard', () => {
     const result = writeLeaderboard(record)
 
     expect(result).toBe(
-      '### Leaderboard:\n\n🟩 Wordle\n<@1> has the best score, with an average of 5/6.\n\n🟪 Connections\n<@2> makes the fewest mistakes, averaging 4.3 mistakes per game.\n\n💡 Strands\n<@3> uses the fewest hints, with an average of 2.27 per game.'
+      '### Leaderboard:\n\n🟩 Wordle\n<@1> has the best score, with an average of 5/6.\n\n🟪 Connections\n<@2> makes the fewest mistakes, averaging 4.3 per game.\n\n💡 Strands\n<@3> uses the fewest hints, with an average of 2.27 per game.'
     )
   })
 })

@@ -40,7 +40,7 @@ export const writeLeaderboard = (leaderboardRecord: LeaderboardRecord): string =
   const leaderboard = '### Leaderboard:'
 
   const wordle = `🟩 Wordle\n<@${leaderboardRecord.wordles.user}> has the best score, with an average of ${+leaderboardRecord.wordles.average.toFixed(2)}/6.`
-  const connections = `🟪 Connections\n<@${leaderboardRecord.connections.user}> makes the fewest mistakes, averaging ${+leaderboardRecord.connections.average.toFixed(2)} mistakes per game.`
+  const connections = `🟪 Connections\n<@${leaderboardRecord.connections.user}> makes the fewest mistakes, averaging ${+leaderboardRecord.connections.average.toFixed(2)} per game.`
   const strands = `💡 Strands\n<@${leaderboardRecord.strands.user}> uses the fewest hints, with an average of ${+leaderboardRecord.strands.average.toFixed(2)} per game.`
 
   return `${leaderboard}\n\n${wordle}\n\n${connections}\n\n${strands}`

@@ -1,8 +1,10 @@
+export type User = {
+  name: string
+  id: string
+}
+
 export type UserWordle = {
-  user: {
-    name: string
-    id: string
-  }
+  user: User
   puzzleId: string
   score: string
   hardMode: boolean
@@ -24,10 +26,7 @@ export type ConnectionsScore = {
 }
 
 export type UserConnections = {
-  user: {
-    name: string
-    id: string
-  }
+  user: User
   puzzleId: string
   won: boolean
   score: ConnectionsScore
@@ -44,10 +43,7 @@ export type ConnectionsRecord = {
 }
 
 export type UserStrands = {
-  user: {
-    name: string
-    id: string
-  }
+  user: User
   puzzleId: string
   phrase: string
   hints: number
@@ -64,23 +60,14 @@ export type StrandsRecord = {
   strands: UserStrands[]
 }
 
-export type AggregateScores = {
-  wordles: number[]
-  connections: number[]
-  strands: number[]
+export type LeaderboardItem = {
+  user: string
+  average: number
+  games: number
 }
 
 export type LeaderboardRecord = {
-  wordles: {
-    user: string
-    average: number
-  }
-  connections: {
-    user: string
-    average: number
-  }
-  strands: {
-    user: string
-    average: number
-  }
+  wordles: LeaderboardItem
+  connections: LeaderboardItem
+  strands: LeaderboardItem
 }

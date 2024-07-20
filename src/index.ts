@@ -1,5 +1,5 @@
 import type { Message, TextBasedChannel } from 'discord.js'
-import { IntentsBitField, Client } from 'discord.js'
+import { Client, IntentsBitField } from 'discord.js'
 import {
   isConnections,
   isConnectionsRecord,
@@ -7,21 +7,12 @@ import {
   parseConnectionsRecord,
 } from './helpers/connections-parser'
 import { writeConnectionsRecord } from './helpers/connections-writer'
-import { isWordle, isWordleRecord, parseWordle, parseWordleRecord } from './helpers/wordle-parser'
-import { writeWordleRecord } from './helpers/wordle-writer'
-import type {
-  AggregateScores,
-  ConnectionsRecord,
-  LeaderboardRecord,
-  StrandsRecord,
-  UserConnections,
-  UserStrands,
-  UserWordle,
-  WordleRecord,
-} from './types'
+import { getLeaderboard, writeLeaderboard } from './helpers/leaderboard'
 import { isStrands, isStrandsRecord, parseStrands, parseStrandsRecord } from './helpers/strands-parser'
 import { writeStrandsRecord } from './helpers/strands-writer'
-import { getLeaderboard, writeLeaderboard } from './helpers/leaderboard'
+import { isWordle, isWordleRecord, parseWordle, parseWordleRecord } from './helpers/wordle-parser'
+import { writeWordleRecord } from './helpers/wordle-writer'
+import type { ConnectionsRecord, LeaderboardRecord, StrandsRecord, User, WordleRecord } from './types'
 require('dotenv').config()
 
 const CHANNEL_ID = process.env.CHANNEL_ID!
@@ -38,7 +29,7 @@ client.login(process.env.TOKEN)
 
 const isReady = new Promise<void>((r) => client.on('ready', () => r()))
 
-const uniqueGames = (game: { user: UserWordle['user'] }, i: number, games: { user: UserWordle['user'] }[]) =>
+const uniqueGames = (game: { user: User }, i: number, games: { user: User }[]) =>
   games.findIndex((g) => g.user.id === game.user.id) === i
 const puzzleNumber = ([a]: [string, unknown], [b]: [string, unknown]) => Number.parseInt(a) - Number.parseInt(b)
 
@@ -239,57 +230,11 @@ async function processMessages() {
     channel.send(`!reply-debug\n\nRead time: ${readTimeElapsed}ms\nReads: ${reads}\nWrites: ${writes}`)
   }
 
-  const aggregateScores = new Map<string, AggregateScores>()
-  ;[...wordleRecords.values()].forEach((record) => {
-    const { wordles } = record
-
-    wordles.forEach((game) => {
-      const { user } = game
-
-      if (!aggregateScores.has(user.id))
-        aggregateScores.set(user.id, {
-          wordles: [],
-          connections: [],
-          strands: [],
-        })
-
-      aggregateScores.get(user.id)!.wordles.push(+game.score)
-    })
-  })
-  ;[...connectionsRecords.values()].forEach((record) => {
-    const { connections } = record
-
-    connections.forEach((game) => {
-      const { user } = game
-
-      if (!aggregateScores.has(user.id))
-        aggregateScores.set(user.id, {
-          wordles: [],
-          connections: [],
-          strands: [],
-        })
-
-      aggregateScores.get(user.id)!.connections.push(+game.score.incorrect)
-    })
-  })
-  ;[...strandsRecords.values()].forEach((record) => {
-    const { strands } = record
-
-    strands.forEach((game) => {
-      const { user } = game
-
-      if (!aggregateScores.has(user.id))
-        aggregateScores.set(user.id, {
-          wordles: [],
-          connections: [],
-          strands: [],
-        })
-
-      aggregateScores.get(user.id)!.strands.push(+game.hints)
-    })
-  })
-
-  const leaderboard: LeaderboardRecord = getLeaderboard(aggregateScores)
+  const leaderboard: LeaderboardRecord = getLeaderboard(
+    [...wordleRecords.values()],
+    [...connectionsRecords.values()],
+    [...strandsRecords.values()]
+  )
   channel.send(writeLeaderboard(leaderboard))
 
   deletionQueue.forEach((message) => {

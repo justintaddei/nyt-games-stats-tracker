@@ -90,6 +90,15 @@ async function processMessages() {
       deletionQueue.add(message)
     }
 
+    if (isAlias(message)) {
+      const [, oldName, newName] = message.content.split(' ') as [string, string, string];
+
+      addAlias(oldName, newName);
+
+      deletionQueue.add(message)
+      return
+    }
+
     if (halt) {
       return
     }
@@ -101,15 +110,6 @@ async function processMessages() {
     }
     if (isDebugOff(message)) {
       debugMode = false
-      deletionQueue.add(message)
-      return
-    }
-
-    if (isAlias(message)) {
-      const [, oldName, newName] = message.content.split(' ') as [string, string, string];
-
-      addAlias(oldName, newName);
-
       deletionQueue.add(message)
       return
     }

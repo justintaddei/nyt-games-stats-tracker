@@ -284,7 +284,7 @@ async function processMessages() {
     console.error('!halting because:', error)
     halt = true
     const channel = await getChannel()
-    channel.isSendable() && channel.send(`!freeze active because: ${(error as Error).message}`)
+    channel.isSendable() && channel.send(`!halting because: because: ${(error as Error).message}`)
   }
 
   client.on('messageCreate', async (message) => {

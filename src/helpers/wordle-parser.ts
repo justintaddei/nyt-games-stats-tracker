@@ -1,5 +1,6 @@
 import type { Client } from 'discord.js'
 import type { UserWordle, WordleRecord } from '../types'
+import { checkForAlias } from './aliases'
 
 type WordleMessage = {
   content: string
@@ -70,7 +71,7 @@ export const parseWordleRecord = (msg: WordleMessage, client: Client): WordleRec
   const mappedGuesses = lines.slice(guessesStart).reduce(
     (_guesses, line) => {
       if (line.startsWith('@')) {
-        currentUser = line.split(' ')[0]!.slice(1)
+        currentUser = checkForAlias(line.split(' ')[0]!.slice(1))
         _guesses.push({ username: currentUser, guesses: '' })
         return _guesses
       }

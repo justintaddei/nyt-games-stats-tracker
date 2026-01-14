@@ -1,5 +1,6 @@
 import type { Client } from 'discord.js'
 import type { ConnectionsRecord, ConnectionsScore, UserConnections } from '../types'
+import { checkForAlias } from './aliases'
 
 type ConnectionsMessage = {
   // TODO: move this to types.ts and use for both wordle and connections
@@ -75,7 +76,7 @@ export const parseConnectionsRecord = (msg: ConnectionsMessage, client: Client):
   const mappedAttempts = lines.slice(attemptsStart).reduce(
     (_attempts, line) => {
       if (line.startsWith('@')) {
-        currentUser = line.split(' ')[0]!.slice(1)
+        currentUser = checkForAlias(line.split(' ')[0]!.slice(1))
         _attempts.push({ username: currentUser, connections: '' })
         return _attempts
       }

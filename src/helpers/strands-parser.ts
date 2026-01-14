@@ -1,5 +1,6 @@
 import type { Client } from 'discord.js'
 import type { StrandsRecord, UserStrands } from '../types'
+import { checkForAlias } from './aliases'
 
 type StrandsMessage = {
   // TODO: move this to types.ts and use for both wordle and strands
@@ -55,7 +56,7 @@ export const parseStrandsRecord = (msg: StrandsMessage, client: Client): Strands
   const mappedScores = lines.slice(scoreStart).reduce(
     (_scores, line) => {
       if (line.startsWith('@')) {
-        currentUser = line.split(' ')[0]!.slice(1)
+        currentUser = checkForAlias(line.split(' ')[0]!.slice(1))
         _scores.push({ username: currentUser, strands: '' })
         return _scores
       }

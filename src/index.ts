@@ -13,6 +13,7 @@ import { writeStrandsRecord } from './helpers/strands-writer'
 import { isWordle, isWordleRecord, parseWordle, parseWordleRecord } from './helpers/wordle-parser'
 import { writeWordleRecord } from './helpers/wordle-writer'
 import type { ConnectionsRecord, LeaderboardRecord, StrandsRecord, User, WordleRecord } from './types'
+import { addAlias } from './helpers/aliases'
 require('dotenv').config()
 
 const CHANNEL_ID = process.env.CHANNEL_ID!
@@ -36,7 +37,7 @@ const puzzleNumber = ([a]: [string, unknown], [b]: [string, unknown]) => Number.
 function getChannel() {
   return new Promise<TextBasedChannel>((resolve) => {
     client.channels.fetch(CHANNEL_ID).then((channel) => {
-      if (!channel?.isTextBased()) throw new Error('Channel is not a text based')
+      if (!channel?.isTextBased()) throw new Error('Channel is not text based')
 
       resolve(channel)
     })
@@ -44,18 +45,27 @@ function getChannel() {
 }
 
 function forEachMessage(channel: TextBasedChannel, fn: (message: Message) => void) {
-  return new Promise<void>((resolve) => {
-    channel.messages.fetch().then((messages) => {
-      messages.reverse().forEach(fn)
+  return new Promise<void>((resolve, reject) => {
+    channel.messages.fetch().then(async (messages) => {
+      try {
+        messages.reverse().forEach(fn)
+      } catch (error) {
+        reject(error)
+      }
       resolve()
     })
   })
 }
 
+const isResume = (message: Message) => message.content.startsWith('!resume')
 const isDebugOn = (message: Message) => message.content.startsWith('!debug-on')
 const isDebugOff = (message: Message) => message.content.startsWith('!debug-off')
 
+const isAlias = (message: Message) => message.content.startsWith('!alias') && message.content.split(' ').length === 3
+
+
 let debugMode = false
+let halt = false
 
 async function processMessages() {
   const wordleRecords = new Map<string, WordleRecord>()
@@ -70,9 +80,19 @@ async function processMessages() {
 
   const startReadTime = Date.now()
   let reads = 0
+  let resume = false;
 
   await forEachMessage(channel, (message) => {
     reads++
+
+    if (isResume(message)) {
+      resume = true
+      deletionQueue.add(message)
+    }
+
+    if (halt) {
+      return
+    }
 
     if (isDebugOn(message)) {
       debugMode = true
@@ -81,6 +101,15 @@ async function processMessages() {
     }
     if (isDebugOff(message)) {
       debugMode = false
+      deletionQueue.add(message)
+      return
+    }
+
+    if (isAlias(message)) {
+      const [, oldName, newName] = message.content.split(' ') as [string, string, string];
+
+      addAlias(oldName, newName);
+
       deletionQueue.add(message)
       return
     }
@@ -181,50 +210,55 @@ async function processMessages() {
     deletionQueue.add(message)
   })
 
+  if (halt) {
+    if (resume) halt = false
+    return
+  }
+
   const readTimeElapsed = Date.now() - startReadTime
   let writes = 0
-  ;[...wordleRecords.entries()].sort(puzzleNumber).forEach(([puzzleId, record]) => {
-    const message = existingWordleMessages.get(puzzleId) ?? null
-    const content = writeWordleRecord(record)
+    ;[...wordleRecords.entries()].sort(puzzleNumber).forEach(([puzzleId, record]) => {
+      const message = existingWordleMessages.get(puzzleId) ?? null
+      const content = writeWordleRecord(record)
 
-    if (!record.modified) return
+      if (!record.modified) return
 
-    writes++
+      writes++
 
-    if (message) {
-      message.edit(content)
-    } else {
-      channel.send(content)
-    }
-  })
-  ;[...connectionsRecords.entries()].sort(puzzleNumber).forEach(([puzzleId, record]) => {
-    const message = existingConnectionsMessages.get(puzzleId) ?? null
-    const content = writeConnectionsRecord(record)
+      if (message) {
+        message.edit(content)
+      } else {
+        channel.send(content)
+      }
+    })
+    ;[...connectionsRecords.entries()].sort(puzzleNumber).forEach(([puzzleId, record]) => {
+      const message = existingConnectionsMessages.get(puzzleId) ?? null
+      const content = writeConnectionsRecord(record)
 
-    if (!record.modified) return
+      if (!record.modified) return
 
-    writes++
+      writes++
 
-    if (message) {
-      message.edit(content)
-    } else {
-      channel.send(content)
-    }
-  })
-  ;[...strandsRecords.entries()].sort(puzzleNumber).forEach(([puzzleId, record]) => {
-    const message = existingStrandsMessages.get(puzzleId) ?? null
-    const content = writeStrandsRecord(record)
+      if (message) {
+        message.edit(content)
+      } else {
+        channel.send(content)
+      }
+    })
+    ;[...strandsRecords.entries()].sort(puzzleNumber).forEach(([puzzleId, record]) => {
+      const message = existingStrandsMessages.get(puzzleId) ?? null
+      const content = writeStrandsRecord(record)
 
-    if (!record.modified) return
+      if (!record.modified) return
 
-    writes++
+      writes++
 
-    if (message) {
-      message.edit(content)
-    } else {
-      channel.send(content)
-    }
-  })
+      if (message) {
+        message.edit(content)
+      } else {
+        channel.send(content)
+      }
+    })
 
   if (debugMode) {
     channel.send(`!reply-debug\n\nRead time: ${readTimeElapsed}ms\nReads: ${reads}\nWrites: ${writes}`)
@@ -241,15 +275,30 @@ async function processMessages() {
     message.delete()
   })
 }
-;(async () => {
+; (async () => {
   await isReady
 
-  await processMessages()
+  try {
+    await processMessages()
+  } catch (error) {
+    console.error('!halting because:', error)
+    halt = true
+    const channel = await getChannel()
+    channel.send(`!freeze active because: ${(error as Error).message}`)
+  }
 
-  client.on('messageCreate', (message) => {
+  client.on('messageCreate', async (message) => {
     if (message.channelId !== CHANNEL_ID) return
     if (message.author.bot) return
 
-    processMessages()
+    try {
+      await processMessages()
+
+    } catch (error) {
+      halt = true
+      console.error('!halting because:', error)
+      const channel = await getChannel()
+      channel.send(`!halting because: ${(error as Error).message}`)
+    }
   })
 })()

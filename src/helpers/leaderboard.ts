@@ -87,8 +87,6 @@ export const getLeaderboard = (
     })
   })
 
-  console.log(players)
-
   return {
     wordles: getMinAverage(players, 'wordles', wordles.length),
     connections: getMinAverage(players, 'connections', connections.length),

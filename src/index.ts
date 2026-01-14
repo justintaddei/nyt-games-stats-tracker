@@ -28,7 +28,7 @@ const client = new Client({
 })
 client.login(process.env.TOKEN)
 
-const isReady = new Promise<void>((r) => client.on('ready', () => r()))
+const isReady = new Promise<void>((r) => client.on('clientReady', () => r()))
 
 const uniqueGames = (game: { user: User }, i: number, games: { user: User }[]) =>
   games.findIndex((g) => g.user.id === game.user.id) === i
@@ -228,7 +228,7 @@ async function processMessages() {
       if (message) {
         message.edit(content)
       } else {
-        channel.send(content)
+        channel.isSendable() && channel.send(content)
       }
     })
     ;[...connectionsRecords.entries()].sort(puzzleNumber).forEach(([puzzleId, record]) => {
@@ -242,7 +242,7 @@ async function processMessages() {
       if (message) {
         message.edit(content)
       } else {
-        channel.send(content)
+        channel.isSendable() && channel.send(content)
       }
     })
     ;[...strandsRecords.entries()].sort(puzzleNumber).forEach(([puzzleId, record]) => {
@@ -256,12 +256,12 @@ async function processMessages() {
       if (message) {
         message.edit(content)
       } else {
-        channel.send(content)
+        channel.isSendable() && channel.send(content)
       }
     })
 
   if (debugMode) {
-    channel.send(`!reply-debug\n\nRead time: ${readTimeElapsed}ms\nReads: ${reads}\nWrites: ${writes}`)
+    channel.isSendable() && channel.send(`!reply-debug\n\nRead time: ${readTimeElapsed}ms\nReads: ${reads}\nWrites: ${writes}`)
   }
 
   const leaderboard: LeaderboardRecord = getLeaderboard(
@@ -269,7 +269,7 @@ async function processMessages() {
     [...connectionsRecords.values()],
     [...strandsRecords.values()]
   )
-  channel.send(writeLeaderboard(leaderboard))
+  channel.isSendable() && channel.send(writeLeaderboard(leaderboard))
 
   deletionQueue.forEach((message) => {
     message.delete()
@@ -284,7 +284,7 @@ async function processMessages() {
     console.error('!halting because:', error)
     halt = true
     const channel = await getChannel()
-    channel.send(`!freeze active because: ${(error as Error).message}`)
+    channel.isSendable() && channel.send(`!freeze active because: ${(error as Error).message}`)
   }
 
   client.on('messageCreate', async (message) => {
@@ -298,7 +298,7 @@ async function processMessages() {
       halt = true
       console.error('!halting because:', error)
       const channel = await getChannel()
-      channel.send(`!halting because: ${(error as Error).message}`)
+      channel.isSendable() && channel.send(`!halting because: ${(error as Error).message}`)
     }
   })
 })()

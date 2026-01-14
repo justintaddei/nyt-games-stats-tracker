@@ -29,5 +29,8 @@
     "jsdom": "^24.1.0",
     "typescript": "^5.3.3",
     "vitest": "^2.0.3"
+  },
+  "overrides": {
+    "undici": "4.16.0"
   }
 }

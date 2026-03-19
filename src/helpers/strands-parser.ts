@@ -61,7 +61,7 @@ export const parseStrandsRecord = (msg: StrandsMessage, client: Client): Strands
         return _scores
       }
 
-      if (/^[🔵🟡💡]+/u.test(line)) {
+      if (/^[🟢☘️🔵🟡💡]+/u.test(line)) {
         const puzzle = _scores.find((score) => score.username === currentUser)!
         puzzle.strands = `${puzzle.strands}\n${line}`.trim()
       }

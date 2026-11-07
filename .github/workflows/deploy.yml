@@ -29,7 +29,7 @@ jobs:
           REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
         run: |
           mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          tr -d '\r' < <(printf '%s' "$SSH_PRIVATE_KEY") > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "$REMOTE_HOST" >> ~/.ssh/known_hosts
 

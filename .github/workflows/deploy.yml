@@ -46,12 +46,14 @@ jobs:
           ssh "$R" "mkdir -p '$REMOTE_TARGET'"
           rsync -rltgoDzO --delete dist/ "$R:$REMOTE_TARGET/dist/"
           scp package.json "$R:$REMOTE_TARGET/package.json"
+          printf 'TOKEN=%s\nCHANNEL_ID=%s\n' "$DISCORD_TOKEN" "$CHANNEL_ID" > .env
+          chmod 600 .env
+          scp .env "$R:$REMOTE_TARGET/.env"
+          printf '%s' "$ALIASES_JSON" > aliases.json
+          ssh "$R" "cat > '$REMOTE_TARGET/aliases.json'" < aliases.json
           ssh "$R" "
             set -e
-            umask 077
-            printf 'TOKEN=%s\nCHANNEL_ID=%s\n' \"\$0\" \"\$1\" > '$REMOTE_TARGET/.env'
             cd '$REMOTE_TARGET'
-            pm2 restart nyt-games --update-env || { pm2 start npm --name nyt-games -- start; }
+            pm2 restart nyt-games --update-env || pm2 start npm --name nyt-games -- start
             pm2 save
-          " _ "$DISCORD_TOKEN" "$CHANNEL_ID"
-          ssh "$R" "cat > '$REMOTE_TARGET/aliases.json'" < aliases.json
+          "

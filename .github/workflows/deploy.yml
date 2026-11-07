@@ -1,0 +1,57 @@
+name: SSH Deploy
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🏗️ Build
+        run: npm run build
+
+      - name: 🖥️ Prepare SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$REMOTE_HOST" >> ~/.ssh/known_hosts
+
+      - name: 🚀 Deploy dist + secrets + pm2
+        env:
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          REMOTE_TARGET: ${{ secrets.REMOTE_TARGET }}
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+          ALIASES_JSON: ${{ secrets.ALIASES_JSON }}
+        run: |
+          R="$REMOTE_USER@$REMOTE_HOST"
+          ssh "$R" "mkdir -p '$REMOTE_TARGET'"
+          rsync -rltgoDzO --delete dist/ "$R:$REMOTE_TARGET/dist/"
+          scp package.json "$R:$REMOTE_TARGET/package.json"
+          ssh "$R" "
+            set -e
+            umask 077
+            printf 'TOKEN=%s\nCHANNEL_ID=%s\n' \"\$0\" \"\$1\" > '$REMOTE_TARGET/.env'
+            cd '$REMOTE_TARGET'
+            pm2 restart nyt-games --update-env || { pm2 start npm --name nyt-games -- start; }
+            pm2 save
+          " _ "$DISCORD_TOKEN" "$CHANNEL_ID"
+          ssh "$R" "cat > '$REMOTE_TARGET/aliases.json'" < aliases.json

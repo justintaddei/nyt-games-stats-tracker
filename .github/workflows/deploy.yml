@@ -45,7 +45,8 @@ jobs:
           R="$REMOTE_USER@$REMOTE_HOST"
           ssh "$R" "mkdir -p '$REMOTE_TARGET'"
           rsync -rltgoDzO --delete dist/ "$R:$REMOTE_TARGET/dist/"
-          scp package.json "$R:$REMOTE_TARGET/package.json"
+          scp package.json package-lock.json "$R:$REMOTE_TARGET/"
+          ssh "$R" "cd '$REMOTE_TARGET' && npm ci --omit=dev --no-audit --no-fund --silent"
           printf 'TOKEN=%s\nCHANNEL_ID=%s\n' "$DISCORD_TOKEN" "$CHANNEL_ID" > .env
           chmod 600 .env
           scp .env "$R:$REMOTE_TARGET/.env"

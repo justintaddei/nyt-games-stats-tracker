@@ -45,7 +45,7 @@ jobs:
           R="$REMOTE_USER@$REMOTE_HOST"
           ssh "$R" "mkdir -p '$REMOTE_TARGET'"
           rsync -rltgoDzO --delete dist/ "$R:$REMOTE_TARGET/dist/"
-          scp package.json package-lock.json "$R:$REMOTE_TARGET/"
+          scp package.json package-lock.json ecosystem.config.js "$R:$REMOTE_TARGET/"
           ssh "$R" "cd '$REMOTE_TARGET' && npm ci --omit=dev --no-audit --no-fund --silent"
           printf 'TOKEN=%s\nCHANNEL_ID=%s\n' "$DISCORD_TOKEN" "$CHANNEL_ID" > .env
           chmod 600 .env
@@ -55,6 +55,6 @@ jobs:
           ssh "$R" "
             set -e
             cd '$REMOTE_TARGET'
-            pm2 restart nyt-games --update-env || pm2 start npm --name nyt-games -- start
+            pm2 startOrReload ecosystem.config.js --update-env
             pm2 save
           "
